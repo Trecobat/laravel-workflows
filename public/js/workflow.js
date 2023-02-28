@@ -7286,7 +7286,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
  *
  * Copyright 2014-2016 Damien "Mistic" Sorel (http://www.strangeplanet.fr)
  * Licensed under MIT (http://opensource.org/licenses/MIT)
- * 
+ *
  * Based on jQuery.extend by jQuery Foundation, Inc. and other contributors
  */
 
@@ -7895,6 +7895,8 @@ QueryBuilder.regional = {};
 QueryBuilder.OPERATORS = {
     equal:            { type: 'equal',            nb_inputs: 1, multiple: false, apply_to: ['string', 'number', 'datetime', 'boolean'] },
     not_equal:        { type: 'not_equal',        nb_inputs: 1, multiple: false, apply_to: ['string', 'number', 'datetime', 'boolean'] },
+    change:           { type: 'change',           nb_inputs: 1, multiple: false, apply_to: ['string', 'number', 'datetime', 'boolean'] },
+    no_change:        { type: 'no_change',        nb_inputs: 1, multiple: false, apply_to: ['string', 'number', 'datetime', 'boolean'] },
     in:               { type: 'in',               nb_inputs: 1, multiple: true,  apply_to: ['string', 'number', 'datetime'] },
     not_in:           { type: 'not_in',           nb_inputs: 1, multiple: true,  apply_to: ['string', 'number', 'datetime'] },
     less:             { type: 'less',             nb_inputs: 1, multiple: false, apply_to: ['number', 'datetime'] },
@@ -7964,6 +7966,8 @@ QueryBuilder.DEFAULTS = {
     operators: [
         'equal',
         'not_equal',
+        'change',
+        'no_change',
         'in',
         'not_in',
         'less',
@@ -8276,6 +8280,7 @@ QueryBuilder.prototype.checkOperators = function(operators) {
     var definedOperators = [];
 
     operators.forEach(function(operator, i) {
+        console.log(operator);
         if (typeof operator == 'string') {
             if (!QueryBuilder.OPERATORS[operator]) {
                 Utils.error('Config', 'Unknown operator "{0}"', operator);
@@ -12009,6 +12014,7 @@ QueryBuilder.defaults({
     operatorOpposites: {
         'equal':            'not_equal',
         'not_equal':        'equal',
+        'change':           'no_change',
         'in':               'not_in',
         'not_in':           'in',
         'less':             'greater_or_equal',
@@ -13769,7 +13775,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
  *
  * Copyright 2014-2019 Damien "Mistic" Sorel (http://www.strangeplanet.fr)
  * Licensed under MIT (http://opensource.org/licenses/MIT)
- * 
+ *
  * Based on jQuery.extend by jQuery Foundation, Inc. and other contributors
  */
 
