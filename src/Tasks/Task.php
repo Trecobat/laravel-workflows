@@ -5,6 +5,7 @@ namespace the42coders\Workflows\Tasks;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use the42coders\Workflows\DataBuses\DataBus;
 use the42coders\Workflows\DataBuses\DataBussable;
 use the42coders\Workflows\Fields\Fieldable;
@@ -113,8 +114,10 @@ class Task extends Model implements TaskInterface
             return true;
         }
 
+        //Ajout da possibilité d'utiliser le AND et le OR dans les conditions.
         $conditions = json_decode($this->conditions);
-
+        $typeCondition = $conditions->condition;
+        Log::channel("workflow")->debug("Traitement de mes règles de conditions " . json_encode( $conditions, JSON_PRETTY_PRINT ));
         foreach ($conditions->rules as $rule) {
             $ruleDetails = explode('-', $rule->id);
             $DataBus = $ruleDetails[0];
@@ -122,12 +125,18 @@ class Task extends Model implements TaskInterface
 
             $result = config('workflows.data_resources')[$DataBus]::checkCondition($this, $data, $field, $rule->operator, $rule->value);
 
-            if (! $result) {
+            if (! $result && $typeCondition == "AND") {
+                Log::channel("workflow")->debug("AND Condition non respecté => Fin du traitement ");
                 throw new \Exception('The Condition for Task '.$this->name.' with the field '.$rule->field.' '.$rule->operator.' '.$rule->value.' failed.');
+            }else if ( $result && $typeCondition == "OR" ) {
+                Log::channel("workflow")->debug("OR Condition respectée => Je continue ");
+
+                return true;
             }
         }
-
-        return true;
+        Log::channel("workflow")->debug("$typeCondition " .
+            ($typeCondition == "AND" ? "Condition respectée je continue" : "Condition non respectée fin du traitement") );
+        return $typeCondition == "AND";
     }
 
     public function init(Model $model, DataBus $data, WorkflowLog $log)
