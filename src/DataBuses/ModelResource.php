@@ -33,26 +33,28 @@ class ModelResource implements Resource
         return $variables;
     }
 
-    public static function checkCondition(Model $element, DataBus $dataBus, string $field, string $operator, string $value)
+    public static function checkCondition(Model $element, ?DataBus $dataBus, string $field, string $operator, string $value)
     {
+        $model = $element->model?? $element;
+
         Log::channel("workflow")->debug("Je vais tester ma condition sur mon model");
         Log::channel("workflow")->debug("==> Condition : $field $operator $value");
-        Log::channel("workflow")->debug("==> Valeur de mon model : " . $element->model->{$field});
-        Log::channel("workflow")->debug("==> Historique de mon model : " . json_encode($element->model->histories->last(), JSON_PRETTY_PRINT) );
+        Log::channel("workflow")->debug("==> Valeur de mon model : " . $model->{$field});
+        Log::channel("workflow")->debug("==> Historique de mon model : " . json_encode($model->histories->last(), JSON_PRETTY_PRINT) );
 
         //$test = true;
         switch ($operator) {
             case 'equal':
-                $test = $element->model->{$field} == $value;
+                $test = $model->{$field} == $value;
                 break;
             case 'not_equal':
-                $test = $element->model->{$field} != $value;
+                $test = $model->{$field} != $value;
                 break;
             case 'change':
                 if ($value == '' ||  $value == 'O' || $value == 'OUI' || $value == 'o' || $value == 'oui' || $value == '1'){
                     Log::channel("workflow")->debug("==> Test si mon dernier historique contient mon champs $field" );
                     $test = false;
-                    foreach ( $element->model->histories->last()->meta as $modif){
+                    foreach ( $model->histories->last()->meta as $modif){
                         Log::channel("workflow")->debug("== ==> Test de la modification : " . json_encode($modif,JSON_PRETTY_PRINT) );
                         Log::channel("workflow")->debug("== ==> Test  " . $modif['key'] . " et " . $field );
                         if($modif['key'] == $field ){
