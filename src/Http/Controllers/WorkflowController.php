@@ -4,6 +4,7 @@ namespace the42coders\Workflows\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use the42coders\Workflows\Loggers\WorkflowLog;
 use the42coders\Workflows\Tasks\Task;
 use the42coders\Workflows\Triggers\ReRunTrigger;
@@ -334,8 +335,11 @@ class WorkflowController extends Controller
 
     public function triggerButton(Request $request, $triggerId)
     {
+        Log::channel("workflow")->debug("TriggerButton $triggerId");
         $trigger = Trigger::findOrFail($triggerId);
         $className = $request->model_class;
+        Log::channel("workflow")->debug("TriggerButton model_class $className");
+        Log::channel("workflow")->debug("TriggerButton request " . json_encode( $request->all(), JSON_PRETTY_PRINT) );
         $resource = new $className();
 
         $model = $resource->find($request->model_id);

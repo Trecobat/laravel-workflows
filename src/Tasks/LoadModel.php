@@ -13,6 +13,7 @@ class LoadModel extends Task
 
     public static $output = [
         'Output' => 'output',
+        'Output_Properties' => 'outputProperties',
     ];
 
     public static $icon = '<i class="fas fa-database"></i>';
@@ -34,5 +35,6 @@ class LoadModel extends Task
         $model = $modelClass::find($modelId);
 
         $this->setData('output', $model);
+        $this->setDataArray('outputProperties', $model->toArray());
     }
 }
