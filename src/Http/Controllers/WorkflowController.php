@@ -344,7 +344,7 @@ class WorkflowController extends Controller
 
         $model = $resource->find($request->model_id);
 
-        $trigger->start($model, []);
+        $trigger->start($model, @json_decode( $request->params,true ));
 
         return redirect()->back()->with('sucess', 'Button Triggered a Workflow');
     }
