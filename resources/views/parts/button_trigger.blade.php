@@ -1,3 +1,4 @@
+Test
 <form action="{{ route('workflows.triggers.button', ['id' => $triggerId]) }}" method="POST">
     @csrf
     <input name="model_id" id="model_id" type="hidden" value="{{ $model->id }}">
