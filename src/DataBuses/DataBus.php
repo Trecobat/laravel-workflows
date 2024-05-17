@@ -31,7 +31,12 @@ class DataBus
             $className = $field['type'] ?? ValueResource::class;
             $resource = new $className();
 
-            $this->data[$name] = $resource->getData($name, $field_value, $model, $this);
+            if(is_array($field_value)){
+                $this->data[$name] = $field_value;
+            }else{
+                $this->data[$name] = $resource->getData($name, $field_value, $model, $this);
+            }
+
         }
     }
 

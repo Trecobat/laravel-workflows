@@ -118,6 +118,7 @@ class Task extends Model implements TaskInterface
         $conditions = json_decode($this->conditions);
         $typeCondition = $conditions->condition;
         Log::channel("workflow")->debug("Traitement de mes règles de conditions " . json_encode( $conditions, JSON_PRETTY_PRINT ));
+        Log::channel("workflow")->debug("Traitement de mes règles de conditions  => TASK" . json_encode( $this, JSON_PRETTY_PRINT ));
         foreach ($conditions->rules as $rule) {
             $ruleDetails = explode('-', $rule->id);
             $DataBus = $ruleDetails[0];
@@ -127,7 +128,7 @@ class Task extends Model implements TaskInterface
 
             if (! $result && $typeCondition == "AND") {
                 Log::channel("workflow")->debug("AND Condition non respecté => Fin du traitement ");
-                throw new \Exception('The Condition for Task '.$this->name.' with the field '.$rule->field.' '.$rule->operator.' '.$rule->value.' failed.');
+                throw new \Exception('The Condition for Task '.$this->name.' ['.$this->data_fields['description']['value'].'] with the field '.$rule->field.' '.$rule->operator.' '.$rule->value.' failed.');
             }else if ( $result && $typeCondition == "OR" ) {
                 Log::channel("workflow")->debug("OR Condition respectée => Je continue ");
 
@@ -141,6 +142,8 @@ class Task extends Model implements TaskInterface
 
     public function init(Model $model, DataBus $data, WorkflowLog $log)
     {
+        Log::channel("workflow")->debug("Initiatilisation de ma tâche : ". json_encode($this));
+
         $this->model = $model;
         $this->dataBus = $data;
         $this->workflowLog = $log;
@@ -149,6 +152,7 @@ class Task extends Model implements TaskInterface
         $this->log = TaskLog::createHelper($log->id, $this->id, $this->name);
 
         $this->dataBus->collectData($model, $this->data_fields);
+
 
         try {
             $this->checkConditions($this->model, $this->dataBus);
@@ -173,16 +177,57 @@ class Task extends Model implements TaskInterface
         }
         $this->log->finish();
         $this->workflowLog->updateTaskLog($this->id, '', TaskLog::$STATUS_FINISHED, \Illuminate\Support\Carbon::now());
+
+        Log::channel("workflow")->debug("TASK : Je vais devoir appeler les enfants de mon trigger");
+        Log::channel("workflow")->debug("TASK :  => " . json_encode($this));
+        Log::channel("workflow")->debug("TASK : ENFANTS => " . json_encode($this->children));
+
+        $numChildren = 1;
+        $totalChildren = count($this->children);
+        $totalErrorCheck = 0;
+        $msgError = "-";
+        $taskConditionsError = false;
         foreach ($this->children as $child) {
-            $child->init($this->model, $this->dataBus, $this->workflowLog);
+            Log::channel("workflow")->debug("TASK : Je vais initialiser mon enfant $numChildren/$totalChildren");
+            $taskConditionsError = false;
+
             try {
+                $child->init($this->model, $this->dataBus, $this->workflowLog);
+            }catch (\Throwable $e ){
+                Log::channel("workflow")->debug("Erreur lors de l'initialisation de ma tache $numChildren/$totalChildren : " . $e->getMessage());
+                $msgError = $msgError . " $numChildren/$totalChildren " . $e->getMessage() . " - ";
+                $taskConditionsError = true;
+                $totalErrorCheck++;
+            } finally {
+                $numChildren++;
+            }
+
+
+            try {
+                if( $totalErrorCheck == $totalChildren ){
+                    throw new \Exception( $msgError);
+                }
                 $child->execute();
             } catch (\Throwable $e) {
                 $child->workflowLog->updateTaskLog($child->id, $e->getMessage(), TaskLog::$STATUS_ERROR, \Illuminate\Support\Carbon::now());
                 throw $e;
             }
-            $child->pastExecute();
+            if(!$taskConditionsError){
+                $child->pastExecute();
+            }
+
         }
+
+//        foreach ($this->children as $child) {
+//            $child->init($this->model, $this->dataBus, $this->workflowLog);
+//            try {
+//                $child->execute();
+//            } catch (\Throwable $e) {
+//                $child->workflowLog->updateTaskLog($child->id, $e->getMessage(), TaskLog::$STATUS_ERROR, \Illuminate\Support\Carbon::now());
+//                throw $e;
+//            }
+//            $child->pastExecute();
+//        }
     }
 
     public function getSettings()

@@ -25,6 +25,10 @@ trait Fieldable
             return '';
         }
 
+        if(isset($this->data_fields[$field]['value']) && is_array($this->data_fields[$field]['value'])){
+            return json_encode($this->data_fields[$field]['value']);
+        }
+
         return $this->data_fields[$field]['value'] ?? '';
     }
 
