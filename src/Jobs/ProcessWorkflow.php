@@ -82,7 +82,7 @@ class ProcessWorkflow implements ShouldQueue
 
             }
         } catch (\Throwable $e) {
-            DB::rollBack();
+            //DB::rollBack();
             $this->log->setError($e->getMessage(), $this->dataBus);
             $this->log->createTaskLogsFromMemory();
             //dd($e);
